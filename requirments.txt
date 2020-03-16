@@ -7,8 +7,10 @@ Babel==2.8.0
 certifi==2019.11.28
 chardet==3.0.4
 Django==3.0.2
+emoji==0.5.4
 idna==2.9
 multidict==4.7.5
+pkg-resources==0.0.0
 python-dotenv==0.12.0
 pytz==2019.3
 sqlparse==0.3.0
