@@ -17,14 +17,14 @@ from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from chat_dispatcher import ChatDispatcher
 from messages import MESSAGES
 from forex import instruments
+from data import get_traders, add_new_trade
 
 
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
 API_TOKEN = os.getenv('TOKEN')
-ADMIN_USER = os.getenv('ADMIN')
-USERS = os.getenv('USERS').split(',')
+TRADERS = get_traders()
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -69,8 +69,8 @@ async def send_message(user_id: int, text: str, disable_notification: bool = Fal
 
 
 async def broadcast(text: str):
-    for user in USERS:
-        await send_message(user, text)
+    for trader in TRADERS:
+        await send_message(trader['telegram'], text)
         await asyncio.sleep(.05)  # 20 messages per second (Limit: 30 messages per second)
 
 
@@ -120,9 +120,12 @@ async def open_chat(get_message, cancel_state):
         await cancel_state()
 
         user = volume.from_user.full_name
+        telegram = volume.from_user.id
 
-        direction = 'длинную' if direction.data == 'btn_BUY' else 'короткую'
-        await broadcast(MESSAGES['open_info'].format(user=user, symbol=symbol.text.upper(), direction=direction, volume=str(float(volume.text))))
+        direction_text = 'длинную' if direction.data == 'btn_BUY' else 'короткую'
+        direction_key = 'sell' if direction.data == 'btn_BUY' else 'buy'
+        add_new_trade(telegram=telegram, symbol=symbol.text.upper(), direction=direction_key, volume=float(volume.text))
+        # await broadcast(MESSAGES['open_info'].format(user=user, symbol=symbol.text.upper(), direction=direction_text, volume=str(float(volume.text))))
 
     except ChatDispatcher.Timeout as te:
         await te.last_message.answer(MESSAGES['timeout'])
